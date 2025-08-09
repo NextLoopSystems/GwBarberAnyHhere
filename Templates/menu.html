@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Gw Barber</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sidebar-bg: #1a1d24; --sidebar-text-muted: #8c9196; --sidebar-border: #343a40;
+            --accent-color: #0d6efd; --green-color: #198754; --dark-green-color: #20c997;
+            /* Light Mode */
+            --main-bg: #f0f2f5; --content-bg: #ffffff; --text-primary: #212529;
+            --text-secondary: #6c757d; --content-border: #dee2e6;
+        }
+        body.dark-mode {
+            /* Dark Mode */
+            --main-bg: #121212; --content-bg: #1e1e1e; --text-primary: #e9ecef;
+            --text-secondary: #adb5bd; --content-border: #343a40;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--main-bg); color: var(--text-primary); margin: 0; font-size: 15px; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
+        .wrapper { display: flex; min-height: 100vh; }
+        
+        /* --- Sidebar & Template Styles --- */
+        #sidebar { width: 260px; position: fixed; top: 0; left: 0; height: 100vh; z-index: 999; background: var(--sidebar-bg); color: #dee2e6; transition: margin-left 0.3s ease-in-out; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--sidebar-border); }
+        .sidebar-header img { height: 50px; width: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-color); }
+        .sidebar-header h3 { color: white; font-size: 1.25rem; margin-top: 10px; font-weight: 600; }
+        .sidebar-menu { list-style: none; padding: 15px 0; flex-grow: 1; overflow-y: auto; }
+        .sidebar-menu::-webkit-scrollbar { width: 8px; } .sidebar-menu::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-menu::-webkit-scrollbar-thumb { background-color: var(--sidebar-text-muted); border-radius: 10px; border: 2px solid var(--sidebar-bg); }
+        .sidebar-menu a { display: flex; align-items: center; padding: 12px 25px; color: var(--sidebar-text-muted); text-decoration: none; font-weight: 500; transition: background 0.2s ease, color 0.2s ease; }
+        .sidebar-menu a i { font-size: 1.2rem; margin-right: 15px; width: 20px; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: rgba(255, 255, 255, 0.05); color: white; border-left: 3px solid var(--accent-color); padding-left: 22px; }
+        .sidebar-footer { padding: 15px; text-align: center; border-top: 1px solid var(--sidebar-border); }
+        #dark-mode-toggle { background-color: rgba(255, 255, 255, 0.1); color: var(--sidebar-text-muted); border: none; border-radius: 20px; cursor: pointer; padding: 8px 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; font-weight: 500; margin: 0 auto; width: 150px; }
+        #dark-mode-toggle:hover { background-color: rgba(255, 255, 255, 0.2); color: white; }
+        #logout-btn { background-color: rgba(220, 53, 69, 0.15); color: #f8d7da; border-radius: 20px; cursor: pointer; padding: 8px 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; font-weight: 500; margin: 10px auto 10px auto; width: 150px; text-decoration: none; transition: all 0.2s ease; }
+        #logout-btn:hover { background-color: rgba(220, 53, 69, 0.3); color: #fff; }
+        
+        #content { padding: 30px; transition: margin-left 0.3s ease-in-out; flex-grow: 1; min-width: 0; }
+        #sidebar-toggle { font-size: 1.5rem; cursor: pointer; background: none; border: none; color: var(--text-primary); }
+        body.sidebar-collapsed #sidebar { margin-left: -260px; } 
+        body:not(.sidebar-collapsed) #content { margin-left: 260px; }
+        .content-header { display: flex; align-items: center; gap: 15px; margin-bottom: 1.5rem; }
+        .content-header h1 { font-weight: 700; margin-bottom: 0; color: var(--text-primary); font-size: 1.8rem; }
+        
+        /* --- Estilos do Dashboard --- */
+        .kpi-card, .chart-card, .filter-card, .welcome-card { background-color: var(--content-bg); border: 1px solid var(--content-border); border-radius: 0.5rem; }
+        .welcome-card { background: linear-gradient(135deg, var(--accent-color), #0056b3); color: white; border: none; }
+        .filter-card .form-label { color: var(--text-secondary); }
+        .chart-card .card-title { color: var(--text-primary); }
+        
+        /* CORREÇÕES FINAIS DE COR E ÍCONE */
+        .kpi-card .card-body { position: relative; padding: 1.25rem; }
+        .kpi-card .text-muted { color: var(--text-secondary) !important; /* Força a cor correta */ }
+        .kpi-card .kpi-value { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); }
+        .kpi-card .kpi-icon { font-size: 2.5rem; opacity: 0.1; position: absolute; bottom: 5px; right: 15px; color: var(--accent-color); }
+        body.dark-mode .kpi-card .kpi-icon { color: var(--text-primary); opacity: 0.05; }
+
+        .kpi-total .kpi-value { color: var(--green-color); }
+        body.dark-mode .kpi-total .kpi-value { color: var(--dark-green-color); }
+    </style>
+</head>
+<body class="sidebar-collapsed"> 
+<div class="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header"> <img src="{{ url_for('static', filename='Logo_GwJpg.jpg') }}" alt="Logo"> <h3>Gw Barber Oficial</h3> </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('index') }}" class="active"><i class="bi bi-grid-1x2-fill"></i>DashBoard</a></li>
+            <hr class="mx-3" style="border-color: var(--sidebar-border);">
+            <li><a href="{{ url_for('registro_servico') }}"><i class="bi bi-incognito"></i>Registrar Serviço</a></li>
+            <li><a href="{{ url_for('registro_venda') }}"><i class="bi bi-cart3"></i>Registrar Venda</a></li>
+            <li><a href="{{ url_for('registro_produto') }}"><i class="bi bi-pencil"></i>Registrar Produto</a></li>
+            <hr class="mx-3" style="border-color: var(--sidebar-border);">
+            <li><a href="{{ url_for('servicos_lista') }}"><i class="bi bi-card-list"></i>Tabela Serviços</a></li>
+            <li><a href="{{ url_for('vendas_lista') }}"><i class="bi bi-card-checklist"></i>Tabela Vendas</a></li>
+            <li><a href="{{ url_for('produtos_lista') }}"><i class="bi bi-columns-gap"></i>Estoque</a></li>
+            {% if session.is_admin %}
+            <hr class="mx-3" style="border-color: var(--sidebar-border);">
+            <li><a href="{{ url_for('registrar') }}"><i class="bi bi-person-plus-fill"></i>Registrar Usuário</a></li>
+            <li><a href="{{ url_for('usuarios_lista') }}"><i class="bi bi-people-fill"></i>Gerenciar Usuários</a></li>
+            {% endif %}
+        </ul>
+        <div class="sidebar-footer">
+            <button id="dark-mode-toggle"> <i class="bi bi-moon-fill"></i> <span>Modo Escuro</span> </button>
+            <a href="{{ url_for('logout') }}" id="logout-btn"> <i class="bi bi-box-arrow-right"></i> <span>Sair</span> </a>
+            <p class="mt-2" style="font-size: 0.7rem; color: var(--sidebar-text-muted)">&copy; 2025 Next Loop.</p>
+        </div>
+    </nav>
+
+    <main id="content">
+        <div class="content-header">
+            <button id="sidebar-toggle"><i class="bi bi-list"></i></button>
+            <h1>Dashboard</h1>
+        </div>
+        
+        <div class="card welcome-card p-3 shadow-sm mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-graph-up-arrow display-6 mx-3"></i>
+                <div>
+                    <h5 class="mb-0">Bem-vindo(a) de volta, {{ session.usuario }}!</h5>
+                    <p class="mb-0 opacity-75" style="font-size: 0.9rem;">Aqui está um resumo do desempenho.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card filter-card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label for="filtro-barbeiro" class="form-label">Barbeiro</label>
+                        <select id="filtro-barbeiro" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtro-periodo" class="form-label">Período</label>
+                        <select id="filtro-periodo" class="form-select form-select-sm">
+                            <option value="all" selected>Todo o Período</option>
+                            <option value="hour">Última Hora</option>
+                            <option value="day">Último Dia</option>
+                            <option value="week">Última Semana</option>
+                            <option value="month">Último Mês</option>
+                            <option value="year">Último Ano</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3"><div class="card kpi-card shadow-sm h-100"><div class="card-body"><i class="bi bi-scissors kpi-icon"></i><div class="text-muted">Faturamento Serviços</div><div id="total-servicos" class="kpi-value">R$ 0,00</div></div></div></div>
+            <div class="col-md-4 mb-3"><div class="card kpi-card shadow-sm h-100"><div class="card-body"><i class="bi bi-box-seam kpi-icon"></i><div class="text-muted">Faturamento Vendas</div><div id="total-vendas" class="kpi-value">R$ 0,00</div></div></div></div>
+            <div class="col-md-4 mb-3"><div class="card kpi-card kpi-total shadow-sm h-100"><div class="card-body"><i class="bi bi-cash-coin kpi-icon"></i><div class="text-muted">Faturamento Total</div><div id="total-geral" class="kpi-value">R$ 0,00</div></div></div></div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4"><div class="card chart-card shadow-sm"><div class="card-body"><h5 class="card-title">Total de Serviços por Barbeiro</h5><div style="height: 280px;"><canvas id="grafico-servicos"></canvas></div></div></div></div>
+            <div class="col-lg-6 mb-4"><div class="card chart-card shadow-sm"><div class="card-body"><h5 class="card-title">Total de Vendas por Barbeiro</h5><div style="height: 280px;"><canvas id="grafico-vendas"></canvas></div></div></div></div>
+            <div class="col-12 mb-4"><div class="card chart-card shadow-sm"><div class="card-body"><h5 class="card-title">Produtos em Estoque</h5><div style="height: 280px;"><canvas id="grafico-produtos"></canvas></div></div></div></div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const body = document.body;
+    let charts = {};
+    
+    // --- LÓGICA DO TEMA E SIDEBAR ---
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (window.innerWidth > 768) { body.classList.remove('sidebar-collapsed'); }
+    sidebarToggle.addEventListener('click', () => body.classList.toggle('sidebar-collapsed'));
+    
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const savedTheme = localStorage.getItem('theme');
+    
+    function updateChartAxisColors() {
+        const axisColor = getComputedStyle(body).getPropertyValue('--text-secondary');
+        for (const chartId in charts) {
+            if (charts.hasOwnProperty(chartId)) {
+                const chart = charts[chartId];
+                chart.options.scales.x.ticks.color = axisColor;
+                chart.options.scales.y.ticks.color = axisColor;
+                chart.update('none');
+            }
+        }
+    }
+    function applyTheme(theme) { body.classList.toggle('dark-mode', theme === 'dark'); updateChartAxisColors(); }
+    darkModeToggle.addEventListener('click', () => { const newTheme = body.classList.contains('dark-mode') ? 'light' : 'dark'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+    if (savedTheme) { applyTheme(savedTheme); }
+    
+    // --- LÓGICA DO DASHBOARD ---
+    const kpiServicos = document.getElementById('total-servicos');
+    const kpiVendas = document.getElementById('total-vendas');
+    const kpiGeral = document.getElementById('total-geral');
+    
+    function createChart(ctx) {
+        const chartId = ctx.canvas.id;
+        if (charts[chartId]) { charts[chartId].destroy(); }
+        const chartOptions = {
+            maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: getComputedStyle(body).getPropertyValue('--text-secondary') }, grid: { color: getComputedStyle(body).getPropertyValue('--content-border') } },
+                x: { ticks: { color: getComputedStyle(body).getPropertyValue('--text-secondary') }, grid: { color: 'transparent' } }
+            }
+        };
+        charts[chartId] = new Chart(ctx, { type: 'bar', data: {}, options: chartOptions });
+    }
+
+    createChart(document.getElementById('grafico-servicos').getContext('2d'));
+    createChart(document.getElementById('grafico-vendas').getContext('2d'));
+    createChart(document.getElementById('grafico-produtos').getContext('2d'));
+
+    function formatCurrency(value) { return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+    async function fetchDashboardData() {
+        const barbeiro = document.getElementById('filtro-barbeiro').value;
+        const period = document.getElementById('filtro-periodo').value;
+        
+        let url = `/api/dashboard_data?`;
+        if (barbeiro) url += `barbeiro=${barbeiro}&`;
+        if (period) url += `period=${period}&`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            kpiServicos.textContent = formatCurrency(data.total_servicos_faturado);
+            kpiVendas.textContent = formatCurrency(data.total_vendas_faturado);
+            kpiGeral.textContent = formatCurrency(data.faturamento_total);
+            updateChartData(charts['grafico-servicos'], data.servicos_por_barbeiro.labels, data.servicos_por_barbeiro.data, 'Serviços');
+            updateChartData(charts['grafico-vendas'], data.vendas_por_barbeiro.labels, data.vendas_por_barbeiro.data, 'Vendas');
+            updateChartData(charts['grafico-produtos'], data.produtos_em_estoque.labels, data.produtos_em_estoque.data, 'Quantidade');
+        } catch (error) { console.error("Erro ao buscar dados do dashboard:", error); }
+    }
+
+    function updateChartData(chart, labels, data, label) {
+        chart.data.labels = labels;
+        chart.data.datasets = [{
+            label: label,
+            data: data,
+            backgroundColor: 'rgba(13, 110, 253, 0.5)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+        }];
+        chart.update();
+    }
+    
+    async function loadBarbers() {
+        try {
+            const response = await fetch('/api/barbeiros');
+            const barbeiros = await response.json();
+            const select = document.getElementById('filtro-barbeiro');
+            barbeiros.forEach(b => {
+                select.innerHTML += `<option value="${b}">${b}</option>`;
+            });
+        } catch (error) { console.error("Erro ao carregar barbeiros:", error); }
+    }
+
+    document.getElementById('filtro-barbeiro').addEventListener('change', fetchDashboardData);
+    document.getElementById('filtro-periodo').addEventListener('change', fetchDashboardData);
+
+    loadBarbers();
+    fetchDashboardData();
+});
+</script>
+
+</body>
+</html>
