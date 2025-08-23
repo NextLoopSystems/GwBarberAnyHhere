@@ -85,7 +85,7 @@
             <hr class="mx-3" style="border-color: var(--sidebar-border);">
             <li><a href="{{ url_for('registrar') }}"><i class="bi bi-person-plus-fill"></i>Registrar Usuário</a></li>
             <li><a href="{{ url_for('usuarios_lista') }}"><i class="bi bi-people-fill"></i>Gerenciar Usuários</a></li>
-            {% endif %}
+            
         </ul>
         <div class="sidebar-footer">
             <button id="dark-mode-toggle"> <i class="bi bi-moon-fill"></i> <span>Modo Escuro</span> </button>
@@ -104,7 +104,7 @@
             <div class="d-flex align-items-center">
                 <i class="bi bi-graph-up-arrow display-6 mx-3"></i>
                 <div>
-                    <h5 class="mb-0">Bem-vindo(a) de volta, {{ session.usuario }}!</h5>
+                {% endif %}    <h5 class="mb-0">Bem-vindo(a) de volta, {{ session.usuario }}!</h5>
                     <p class="mb-0 opacity-75" style="font-size: 0.9rem;">Aqui está um resumo do desempenho.</p>
                 </div>
             </div>
