@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Gw Barber{% endblock %}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --sidebar-bg: #1a1d24; --sidebar-text-muted: #8c9196; --sidebar-border: #343a40; --accent-color: #0d6efd; --green-color: #198754; --red-color: #dc3545; --dark-green-color: #20c997; --main-bg: #f0f2f5; --content-bg: #ffffff; --text-primary: #212529; --text-secondary: #6c757d; --content-border: #dee2e6; }
+        body.dark-mode { --main-bg: #121212; --content-bg: #1e1e1e; --text-primary: #e9ecef; --text-secondary: #adb5bd; --content-border: #343a40; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--main-bg); color: var(--text-primary); margin: 0; font-size: 15px; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
+        .wrapper { display: flex; min-height: 100vh; }
+        #sidebar { width: 260px; position: fixed; top: 0; left: 0; height: 100vh; z-index: 999; background: var(--sidebar-bg); color: #dee2e6; transition: margin-left 0.3s ease-in-out; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--sidebar-border); }
+        .sidebar-header img { height: 50px; width: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-color); }
+        .sidebar-header h3 { color: white; font-size: 1.25rem; margin-top: 10px; font-weight: 600; }
+        .sidebar-menu { list-style: none; padding: 15px 0; flex-grow: 1; overflow-y: auto; }
+        .sidebar-menu::-webkit-scrollbar { width: 8px; } 
+        .sidebar-menu::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-menu::-webkit-scrollbar-thumb { background-color: var(--sidebar-text-muted); border-radius: 10px; border: 2px solid var(--sidebar-bg); }
+        .sidebar-menu a { display: flex; align-items: center; padding: 12px 25px; color: var(--sidebar-text-muted); text-decoration: none; font-weight: 500; transition: background 0.2s ease, color 0.2s ease; }
+        .sidebar-menu a i { font-size: 1.2rem; margin-right: 15px; width: 20px; }
+        .sidebar-menu a.active { background: rgba(255, 255, 255, 0.05); color: white; border-left: 3px solid var(--accent-color); padding-left: 22px; }
+        .sidebar-footer { padding: 15px; text-align: center; border-top: 1px solid var(--sidebar-border); }
+        #dark-mode-toggle { background-color: rgba(255, 255, 255, 0.1); color: var(--sidebar-text-muted); border: none; border-radius: 20px; cursor: pointer; padding: 8px 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; font-weight: 500; margin: 0 auto; width: 150px; }
+        #dark-mode-toggle:hover { background-color: rgba(255, 255, 255, 0.2); color: white; }
+        #logout-btn { background-color: rgba(220, 53, 69, 0.15); color: #f8d7da; border-radius: 20px; cursor: pointer; padding: 8px 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; font-weight: 500; margin: 10px auto 10px auto; width: 150px; text-decoration: none; transition: all 0.2s ease; }
+        #logout-btn:hover { background-color: rgba(220, 53, 69, 0.3); color: #fff; }
+        #content { padding: 30px; transition: margin-left 0.3s ease-in-out; flex-grow: 1; min-width: 0; }
+        #sidebar-toggle { font-size: 1.5rem; cursor: pointer; background: none; border: none; color: var(--text-primary); }
+        body.sidebar-collapsed #sidebar { margin-left: -260px; } 
+        body:not(.sidebar-collapsed) #content { margin-left: 260px; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="sidebar-collapsed"> 
+<div class="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <img src="{{ url_for('static', filename='Logo_GwJpg.jpg') }}" alt="Logo">
+            <h3>Gw Barber Oficial</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i>DashBoard</a></li>
+            <hr class="mx-3" style="border-color: var(--sidebar-border);">
+            <li><a href="{{ url_for('registro_servico') }}" class="{% if request.endpoint == 'registro_servico' %}active{% endif %}"><i class="bi bi-incognito"></i>Registrar Serviço</a></li>
+            <li><a href="{{ url_for('registro_venda') }}" class="{% if request.endpoint == 'registro_venda' %}active{% endif %}"><i class="bi bi-cart3"></i>Registrar Venda</a></li>
+            {% if session.is_admin %}
+            <li><a href="{{ url_for('registro_produto') }}" class="{% if request.endpoint == 'registro_produto' %}active{% endif %}"><i class="bi bi-pencil"></i>Registrar Produto</a></li>
+            {% endif %}
+
+            {% if session.is_admin %}
+            <li><a href="{{ url_for('registro_conta') }}" class="{% if request.endpoint == 'registro_conta' %}active{% endif %}"><i class="bi bi-cash-coin"></i>Registrar Gastos</a></li>
+            {% endif %}
+            <hr class="mx-3" style="border-color: var(--sidebar-border);">
+
+            <li><a href="{{ url_for('servicos_lista') }}" class="{% if request.endpoint == 'servicos_lista' %}active{% endif %}"><i class="bi bi-table"></i>Tabela Serviços</a></li>
+            <li><a href="{{ url_for('vendas_lista') }}" class="{% if request.endpoint == 'vendas_lista' %}active{% endif %}"><i class="bi bi-table"></i>Tabela Vendas</a></li>
+            <li><a href="{{ url_for('produtos_lista') }}" class="{% if request.endpoint == 'produtos_lista' %}active{% endif %}"><i class="bi bi-table"></i>Estoque</a></li>
+            {% if session.is_admin %}
+            <li><a href="{{ url_for('lista_conta') }}" class="{% if request.endpoint == 'lista_conta' %}active{% endif %}"><i class="bi bi-table"></i>Tabela Contas</a></li>
+            {% endif %}
+
+            {% if session.is_admin %}
+            <hr class="mx-3" style="border-color: var(--sidebar-border);">
+            <li><a href="{{ url_for('registrar') }}" class="{% if request.endpoint == 'registrar' %}active{% endif %}"><i class="bi bi-person-plus-fill"></i>Registrar Usuário</a></li>
+            <li><a href="{{ url_for('usuarios_lista') }}" class="{% if request.endpoint == 'usuarios_lista' %}active{% endif %}"><i class="bi bi-people-fill"></i>Gerenciar Usuários</a></li>
+            {% endif %}
+        </ul>
+        <div class="sidebar-footer">
+            <button id="dark-mode-toggle"> <i class="bi bi-moon-fill"></i> <span>Modo Escuro</span> </button>
+            <a href="{{ url_for('logout') }}" id="logout-btn"> <i class="bi bi-box-arrow-right"></i> <span>Sair</span> </a>
+            <p class="mt-2" style="font-size: 0.7rem; color: var(--sidebar-text-muted)">&copy; 2025 Next Loop.</p>
+        </div>
+    </nav>
+
+    <main id="content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_libs %}{% endblock %}
+
+<script>
+// SCRIPTS COMUNS A TODAS AS PÁGINAS (SIDEBAR E DARK MODE)
+document.addEventListener('DOMContentLoaded', function () {
+    const body = document.body;
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (window.innerWidth > 768) {
+        body.classList.remove('sidebar-collapsed');
+    }
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            body.classList.toggle('sidebar-collapsed');
+        });
+    }
+
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        function applyTheme(theme) {
+            body.classList.toggle('dark-mode', theme === 'dark');
+            const toggleText = darkModeToggle.querySelector('span');
+            const icon = darkModeToggle.querySelector('i');
+            if (theme === 'dark') {
+                toggleText.textContent = 'Modo Claro';
+                icon.className = 'bi bi-sun-fill';
+            } else {
+                toggleText.textContent = 'Modo Escuro';
+                icon.className = 'bi bi-moon-fill';
+            }
+        }
+        darkModeToggle.addEventListener('click', () => {
+            const newTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        applyTheme(savedTheme);
+    }
+});
+</script>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

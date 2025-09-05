@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Contas | Gw Barber{% endblock %}
+
+{% block head %}
+<style>
+    .content-header h1 { font-weight: 700; margin-bottom: 0; color: var(--text-primary); font-size: 1.8rem; }
+    .service-card { background-color: var(--content-bg); border: 1px solid var(--content-border); border-radius: 0.5rem; }
+    .card-header { background-color: transparent; border-bottom: 1px solid var(--content-border); font-weight: 600; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; }
+    .detail-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--content-border); font-size: 0.9rem; }
+    .detail-item:last-child { border-bottom: none; }
+    .detail-label { color: var(--text-secondary); }
+    .detail-value { color: var(--text-primary); font-weight: 500; }
+    .card-footer { background-color: transparent; border-top: 1px solid var(--content-border); }
+    .action-btn { color: var(--text-secondary); }
+    .action-btn.btn-edit:hover { color: var(--accent-color); }
+    .action-btn.btn-delete:hover { color: #dc3545; }
+    .modal-content { background-color: var(--content-bg); color: var(--text-primary); border-color: var(--content-border); }
+    .form-control, .form-check-input { background-color: var(--input-bg); border-color: var(--content-border); color: var(--text-primary); }
+    body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <button id="sidebar-toggle"><i class="bi bi-list"></i></button>
+    <h1 class="flex-grow-1 text-center"><i class="bi bi-card-list"></i> Contas Registradas</h1>
+    <br>
+</div>
+<div id="conta-list-container" class="row">
+    </div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-fill"></i> Editar Conta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="edit-id">
+                    <div class="mb-3">
+                        <label for="edit-nome-conta" class="form-label">Descrição</label>
+                        <input type="text" id="edit-nome-conta" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-valor" class="form-label">Valor</label>
+                            <input type="number" step="0.01" id="edit-valor" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-data-registro" class="form-label">Data</label>
+                            <input type="date" id="edit-data-registro" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="edit-amortizar-check">
+                        <label class="form-check-label" for="edit-amortizar-check">Amortizar este custo</label>
+                    </div>
+                    <div id="edit-amortizar-group" style="display: none;">
+                        <div class="mb-3">
+                            <label for="edit-meses-amortizar" class="form-label">Meses para Amortizar</label>
+                            <input type="number" min="1" id="edit-meses-amortizar" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-changes-btn">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const listContainer = document.getElementById('conta-list-container');
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    let contasData = [];
+
+    function formatarData(dataStr) {
+        if (!dataStr) return 'N/A';
+        return new Date(dataStr).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+    }
+
+    function formatarValor(valor) {
+        return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function calcularDataFinal(dataStr, meses) {
+        if (!dataStr || !meses) return 'N/A';
+        const d = new Date(dataStr);
+        d.setUTCMonth(d.getUTCMonth() + meses);
+        return formatarData(d);
+    }
+    
+    function formatarParaInputDate(dataStr) {
+        if (!dataStr) return '';
+        const d = new Date(dataStr);
+        return d.toISOString().split('T')[0];
+    }
+
+    async function carregarContas() {
+        try {
+            const response = await fetch("/api/contas");
+            contasData = await response.json();
+            listContainer.innerHTML = '';
+
+            if (contasData.length === 0) {
+                listContainer.innerHTML = `<div class="col-12"><div class="alert alert-info">Nenhuma conta registrada.</div></div>`;
+                return;
+            }
+
+            contasData.forEach(conta => {
+                const col = document.createElement('div');
+                col.className = 'col-lg-4 col-md-6 mb-4';
+                
+                let detalhesAmortizacao = '';
+                if (conta.amortizar) {
+                    detalhesAmortizacao = `
+                        <div class="detail-item"><span class="detail-label">Final Amortização:</span><span class="detail-value">${calcularDataFinal(conta.data_registro, conta.meses_amortizar)}</span></div>
+                        <div class="detail-item"><span class="detail-label">Valor por mês:</span><span class="detail-value">${formatarValor(conta.valor_amortizado)}</span></div>`;
+                }
+
+                col.innerHTML = `
+                    <div class="card service-card h-100 shadow-sm" data-id="${conta.id}">
+                        <div class="card-header">
+                            <span class="text-truncate">${conta.nome_conta || 'Conta sem nome'}</span>
+                            <span class="fw-bold">${formatarValor(conta.valor)}</span>
+                        </div>
+                        <div class="card-body py-2">
+                            <div class="detail-item"><span class="detail-label">Data Registro:</span><span class="detail-value">${formatarData(conta.data_registro)}</span></div>
+                            ${detalhesAmortizacao}
+                        </div>
+                        <div class="card-footer text-end bg-transparent">
+                            <button class="btn btn-link text-decoration-none p-0 ms-3 action-btn btn-edit" title="Editar"><i class="bi bi-pencil-fill fs-5"></i></button>
+                            <button class="btn btn-link text-decoration-none p-0 ms-3 action-btn btn-delete" title="Excluir"><i class="bi bi-trash-fill fs-5"></i></button>
+                        </div>
+                    </div>`;
+                listContainer.appendChild(col);
+            });
+        } catch (error) {
+            listContainer.innerHTML = `<div class="col-12"><div class="alert alert-danger">Não foi possível carregar os dados.</div></div>`;
+        }
+    }
+
+    listContainer.addEventListener('click', async function(e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const card = target.closest('.service-card');
+        const id = card.getAttribute('data-id');
+        
+        // Lógica para Deletar
+        if (target.classList.contains('btn-delete')) {
+            if (confirm(`Tem certeza que deseja excluir a conta ID ${id}?`)) {
+                const response = await fetch(`/api/conta/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                alert(result.message);
+                if (response.ok) carregarContas();
+            }
+        }
+
+        // Lógica para Editar
+        if (target.classList.contains('btn-edit')) {
+            const conta = contasData.find(c => c.id == id);
+            if(conta) {
+                document.getElementById('edit-id').value = conta.id;
+                document.getElementById('edit-nome-conta').value = conta.nome_conta;
+                document.getElementById('edit-valor').value = conta.valor;
+                document.getElementById('edit-data-registro').value = formatarParaInputDate(conta.data_registro);
+                document.getElementById('edit-amortizar-check').checked = conta.amortizar;
+                document.getElementById('edit-meses-amortizar').value = conta.meses_amortizar || '';
+                
+                // Controla a visibilidade do campo de meses
+                const amortizarGroup = document.getElementById('edit-amortizar-group');
+                amortizarGroup.style.display = conta.amortizar ? 'block' : 'none';
+
+                editModal.show();
+            }
+        }
+    });
+    
+    // Controla visibilidade do campo de amortização no modal
+    document.getElementById('edit-amortizar-check').addEventListener('change', function() {
+        document.getElementById('edit-amortizar-group').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Salvar alterações do modal
+    document.getElementById('save-changes-btn').addEventListener('click', async function() {
+        const id = document.getElementById('edit-id').value;
+        const dados = {
+            nome_conta: document.getElementById('edit-nome-conta').value,
+            valor: document.getElementById('edit-valor').value,
+            data_registro: document.getElementById('edit-data-registro').value,
+            amortizar: document.getElementById('edit-amortizar-check').checked,
+            meses_amortizar: document.getElementById('edit-meses-amortizar').value
+        };
+
+        const response = await fetch(`/api/conta/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(dados)
+        });
+        const result = await response.json();
+        alert(result.message);
+        if (response.ok) {
+            editModal.hide();
+            carregarContas();
+        }
+    });
+
+    carregarContas();
+});
+</script>
+{% endblock %}
